@@ -16,12 +16,20 @@ services:
     ports:
       - 80:80
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--entrypoints.ping.address=:8082", "--ping.entryPoint=ping", "--ping"]
+      test:
+        [
+          "CMD",
+          "traefik",
+          "healthcheck",
+          "--entrypoints.ping.address=:8082",
+          "--ping.entryPoint=ping",
+          "--ping",
+        ]
       interval: 5s
       retries: 3
       start_period: 3s
       timeout: 3s
- 
+
   backend:
     image: gradle:7-jdk17
     user: ${MY_UID}:${MY_GID}
@@ -53,9 +61,9 @@ services:
       retries: 10
       start_period: 60s
       timeout: 3s
-  
+
   frontend:
-    image: neuris/frontend
+    build: ./frontend
     extra_hosts:
       - localhost:host-gateway
     container_name: frontend
@@ -111,7 +119,11 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 --user redis -a password PING | grep 'PONG' || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -h 127.0.0.1 --user redis -a password PING | grep 'PONG' || exit 1",
+        ]
       interval: 5s
       retries: 5
       start_period: 3s

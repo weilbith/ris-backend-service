@@ -11,7 +11,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => beforeEach(to))
+// router.beforeEach((to) => beforeEach(to))
 
 function redirectToLogin() {
   location.href = loginEndpoint

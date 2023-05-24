@@ -10,6 +10,8 @@ interface Props {
   modelValue?: any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValue: any
+  addEntryLabel?: string
+  noHorizontalSeparators?: boolean
 }
 
 interface Emits {
@@ -20,10 +22,11 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   summaryComponent: DataSetSummary,
   modelValue: () => [],
+  addEntryLabel: "Weitere Angabe",
+  noHorizontalSeparators: false,
 })
 
 const emit = defineEmits<Emits>()
-const attributes = useAttrs()
 
 const modelValueList = ref<undefined[]>([])
 const elementList = ref<HTMLElement[]>([])
@@ -60,7 +63,7 @@ async function focusFirstFocusableElementOfCurrentEditElement() {
     const firstFocusableElement = currentEditElement.value.querySelectorAll(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     )[0] as HTMLElement
-    firstFocusableElement.focus()
+    firstFocusableElement && firstFocusableElement.focus()
   }
 }
 
@@ -105,6 +108,7 @@ watch(editIndex, focusFirstFocusableElementOfCurrentEditElement)
         v-if="index !== editIndex"
         :key="index"
         class="border-b-1 border-b-blue-500 cursor-pointer flex justify-between py-10"
+        :class="{ '!border-none': noHorizontalSeparators }"
       >
         <component
           :is="summaryComponent"
@@ -128,7 +132,7 @@ watch(editIndex, focusFirstFocusableElementOfCurrentEditElement)
             class="icon material-icons"
             @click="removeModelEntry(index)"
           >
-            delete
+            delete_outline
           </button>
         </div>
       </div>
@@ -136,7 +140,6 @@ watch(editIndex, focusFirstFocusableElementOfCurrentEditElement)
       <component
         :is="editComponent"
         v-else
-        v-bind="attributes"
         v-model="modelValueList[index]"
         class="mt-16"
         @keypress.enter="setEditIndex(undefined)"
@@ -145,11 +148,11 @@ watch(editIndex, focusFirstFocusableElementOfCurrentEditElement)
 
     <button
       aria-label="Weitere Angabe"
-      class="add-button bg-blue-300 focus:outline-4 font-bold gap-0.5 hover:bg-blue-800 hover:text-white inline-flex items-center leading-18 mt-8 outline-0 outline-blue-800 outline-none outline-offset-4 pr-[0.25rem] py-[0.125rem] text-14 text-blue-800 whitespace-nowrap"
+      class="add-button bg-blue-300 focus:outline-4 font-bold gap-0.5 hover:bg-blue-800 hover:text-white inline-flex items-center leading-18 mt-16 outline-0 outline-blue-800 outline-none outline-offset-4 pr-[0.25rem] py-[0.125rem] text-14 text-blue-800 whitespace-nowrap"
       @click="addNewModelEntry"
     >
       <span class="material-icons text-14">add</span>
-      Weitere Angabe
+      {{ addEntryLabel }}
     </button>
   </div>
 </template>

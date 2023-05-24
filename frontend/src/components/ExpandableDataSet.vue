@@ -59,9 +59,14 @@ const padding = computed(() => ({
       </div>
     </template>
 
-    <div class="flex flex-col gap-32 items-start">
+    <div class="flex flex-col items-start">
       <slot />
-      <TextButton aria-label="Fertig" label="Fertig" @click="collapse" />
+      <TextButton
+        aria-label="Fertig"
+        class="mt-32"
+        label="Fertig"
+        @click="collapse"
+      />
     </div>
   </ExpandableContent>
 </template>
