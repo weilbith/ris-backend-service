@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { ref, computed } from "vue"
+import { computed } from "vue"
+import {
+  FootnoteSectionType,
+  FOOTNOTE_TYPE_TO_LABEL_MAPPING,
+} from "./footnote_types"
 import InputField from "@/shared/components/input/InputField.vue"
 import TextInput from "@/shared/components/input/TextInput.vue"
 
@@ -19,18 +23,11 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-enum PartType {
-  CHANGE = "Änderungsfußnote",
-  COMMENT = "Kommentierende Fußnote",
-  COURT = "BVerfG-Entscheidung",
-  COUNTRY = "Landesrecht",
-  EU = "EU/EG-Recht",
-  OTHER = "Sonstige Fußnote",
-}
-
 const partType = computed({
-  get: () => (props.modelValue.type ?? PartType.CHANGE) as PartType, // =P
-  set: (type: PartType) =>
+  get: () =>
+    (props.modelValue.type ??
+      FootnoteSectionType.CHANGE_FOOTNOTE) as FootnoteSectionType, // =P
+  set: (type: FootnoteSectionType) =>
     emit("update:modelValue", { type, content: props.modelValue.content }),
 })
 
@@ -46,7 +43,7 @@ const content = computed({
     <InputField id="footnotePartType" label="Fußnotentyp">
       <div class="flex flex-wrap gap-12 justify-between mt-12">
         <div
-          v-for="type in Object.values(PartType)"
+          v-for="type in Object.keys(FootnoteSectionType)"
           :key="type"
           class="flex gap-8 items-center shrink-0 w-224"
         >
@@ -58,7 +55,9 @@ const content = computed({
             type="radio"
             :value="type"
           />
-          <span class="label-02-reg">{{ type }}</span>
+          <span class="label-02-reg">{{
+            FOOTNOTE_TYPE_TO_LABEL_MAPPING[type as FootnoteSectionType]
+          }}</span>
         </div>
       </div>
     </InputField>

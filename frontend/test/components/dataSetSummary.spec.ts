@@ -116,11 +116,11 @@ describe("DataSetSummary", () => {
   })
 
   it("can handle VNode summary outputs with inner HTML property", () => {
-    const summarizer = (dataEntry: string) => h("div", { class: ["foo"], innerHTML: `${dataEntry}<br>bar` })
+    const summarizer = (dataEntry: string) =>
+      h("div", { class: ["foo"], innerHTML: `${dataEntry}<br>bar` })
     renderComponent({ data: ["foo"], summarizer })
 
     const summary = screen.queryByText("foo")
-    screen.debug()
 
     expect(summary).toBeInTheDocument()
   })

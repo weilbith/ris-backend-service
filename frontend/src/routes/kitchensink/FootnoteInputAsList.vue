@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import { computed, h, VNode } from "vue"
 import FootnotePartInput from "./FootnotePartInput.vue"
+import {
+  FootnoteSection,
+  FOOTNOTE_TYPE_TO_LABEL_MAPPING,
+} from "@/routes/kitchensink/footnote_types"
 import { withSummarizer } from "@/shared/components/DataSetSummary.vue"
 import EditableList from "@/shared/components/EditableList.vue"
 
@@ -30,24 +34,34 @@ const parts = computed({
 })
 
 // COPY-PASTE
-function summarizeFootnotePart(part: {
-  type?: string
-  content?: string
-}): VNode {
-  const type = h(
-    "span",
-    { class: ["bg-yellow-300", "rounded", "px-10", "py-2"] },
-    part.type ?? "Unbekannt"
-  )
+function summarizeFootnotePart(
+  part: FootnoteSection,
+  extraTypeClasses = [""]
+): VNode {
+  const typeClasses = [
+    "bg-yellow-300",
+    "rounded",
+    "px-6",
+    "py-2",
+    "whitespace-pre",
+    ...extraTypeClasses,
+  ]
+  const typeLabel =
+    (part.type && FOOTNOTE_TYPE_TO_LABEL_MAPPING[part.type]) ?? "Unbekannt"
+  const type = h("span", { class: typeClasses }, typeLabel)
 
+  const contentClasses = ["pl-6", "pr-10", "inline", "whitespace-pre-wrap"]
+  const contentText = h("p", { class: contentClasses }, part.content?.trim())
+
+  const contentEmptyHint = h(
+    "span",
+    { class: [...contentClasses, "text-gray-600"] },
+    "leer"
+  )
   const hasContent = part.content && part.content.trim().length > 0
-  const content = h(
-    "span",
-    { class: { "text-gray-600": !hasContent } },
-    hasContent ? part.content?.trim() : "leer"
-  )
+  const content = hasContent ? contentText : contentEmptyHint
 
-  return h("span", { class: ["flex", "gap-4"] }, [type, content])
+  return h("div", [type, content])
 }
 
 const FootnotePartSummary = withSummarizer(summarizeFootnotePart)

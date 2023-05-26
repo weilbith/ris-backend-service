@@ -1,6 +1,15 @@
 <script lang="ts" setup>
 import { computed } from "vue"
-import Input, { SectionType, Section } from "./Input.vue"
+import {
+  Footnote,
+  FootnoteSectionType,
+  FOOTNOTE_TYPE_TO_LABEL_MAPPING,
+} from "./footnote_types"
+
+import SegmentEditor, {
+  Segment,
+  SuggestionGroupOptions,
+} from "./SegmentEditor.vue"
 
 interface Props {
   modelValue?: Footnote
@@ -17,69 +26,84 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const inputValue = computed({
-  get: () => parseFootnoteAsSections(props.modelValue),
-  set: (sections: Section[]) =>
-    emit("update:modelValue", parseSectionsAsFootnote(sections)),
+  get: () => parseFootnoteAsSegments(props.modelValue),
+  set: (segments: Segment[]) =>
+    emit("update:modelValue", parseSegmentsAsFootnote(segments)),
 })
 
-function parseFootnoteAsSections(footnote: Footnote): Section[] {
-  const sections = footnote.parts
-    .map((part): Section[] => {
-      const sections = []
+const FOOTNOTE_SEGMENT_TYPE = "footnote_type"
+
+function parseFootnoteAsSegments(footnote: Footnote): Segment[] {
+  const segments = footnote.parts
+    .map((part): Segment[] => {
+      const segments = []
       part.type &&
-        sections.push({ type: SectionType.KEYWORD, content: part.type })
-      part.content &&
-        sections.push({ type: SectionType.TEXT, content: part.content })
-      return sections
+        segments.push({
+          type: FOOTNOTE_SEGMENT_TYPE,
+          content: FOOTNOTE_TYPE_TO_LABEL_MAPPING[part.type],
+          id: part.type,
+        })
+      part.content && segments.push({ type: "text", content: part.content })
+      return segments
     })
     .reduce(
-      (allSections, currentValue) => [...allSections, ...currentValue],
+      (allSegments, currentValue) => [...allSegments, ...currentValue],
       []
     )
 
   footnote.prefix &&
-    sections.unshift({ type: SectionType.TEXT, content: footnote.prefix })
-  return sections
+    segments.unshift({ type: "text", content: footnote.prefix })
+  return segments
 }
 
-function parseSectionsAsFootnote(sections: Section[]): Footnote {
+function parseSegmentsAsFootnote(segments: Segment[]): Footnote {
   const footnote: Footnote = { parts: [] }
   let partIndex = 0
 
-  if (sections.length > 0 && sections[0].type == SectionType.TEXT) {
-    footnote.prefix = sections[0].content
+  if (segments.length > 0 && segments[0].type == "text") {
+    footnote.prefix = segments[0].content
     partIndex = 1
   }
 
-  while (partIndex < sections.length) {
-    const section = sections[partIndex]
-    const hasType = section.type == SectionType.KEYWORD
-    const type = hasType ? section.content : undefined
+  while (partIndex < segments.length) {
+    const segment = segments[partIndex]
+    const hasFootnoteType = segment.type == FOOTNOTE_SEGMENT_TYPE
+    const footnoteType = hasFootnoteType
+      ? (segment.id as FootnoteSectionType)
+      : undefined
 
-    const nextSection = sections[partIndex + 1] ?? ({} as Section)
-    const hasContent = nextSection.type == SectionType.TEXT
-    const content = hasContent ? nextSection.content : undefined
+    const nextSegment = segments[partIndex + 1] ?? ({} as Segment)
+    const hasFootnoteContent = nextSegment.type == "text"
+    const footnoteContent = hasFootnoteContent ? nextSegment.content : undefined
 
-    footnote.parts.push({ type, content })
-    partIndex += hasContent ? 2 : 1
+    footnote.parts.push({ type: footnoteType, content: footnoteContent })
+    partIndex += hasFootnoteContent ? 2 : 1
   }
 
   return footnote
 }
-</script>
 
-<script lang="ts">
-export type FootnoteSection = {
-  type?: string
-  content?: string
-}
-
-export type Footnote = {
-  prefix?: string
-  parts: FootnoteSection[]
+const options: SuggestionGroupOptions = {
+  segmentType: FOOTNOTE_SEGMENT_TYPE,
+  trigger: "@",
+  elementClasses: ["bg-yellow-300", "rounded", "px-10", "py-2"],
+  callback: (input: string) =>
+    Object.entries(FOOTNOTE_TYPE_TO_LABEL_MAPPING)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([_, label]) =>
+        label.toLowerCase().startsWith(input.toLowerCase())
+      )
+      .map(([id, label]) => ({ label, id })),
 }
 </script>
 
 <template>
-  <Input v-model="inputValue" />
+  <div>
+    <span class="text-gray-900">
+      Sie können mit @ den Fußnoten-Typ wählen (z.B. Änderungsfußnote,
+      Kommentierende Fußnote)
+    </span>
+
+    <SegmentEditor v-model="inputValue" :suggestions="[options]" />
+  </div>
 </template>

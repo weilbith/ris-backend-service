@@ -1,10 +1,17 @@
 <script lang="ts" setup>
 import { ref, watch, defineExpose } from "vue"
 
-interface Props {
-  items: any[]
-  command: (options: { label: string }) => void
+interface SuggestionItem {
+  label: string
+  id?: string
 }
+
+// Interface dictated by the TipTap editor extension called Mention.
+interface Props {
+  items: SuggestionItem[]
+  command: (options: SuggestionItem) => void
+}
+
 const props = defineProps<Props>()
 const selectedIndex = ref(0)
 
@@ -23,11 +30,18 @@ function selectPrevious(): void {
     (selectedIndex.value + props.items.length - 1) % props.items.length
 }
 
-function selectItem(index: number): void {
-  const item = props.items[index]
-  props.command({ label: item })
+function chooseSelectedItem(): void {
+  const item = props.items[selectedIndex.value]
+  chooseItem(item)
 }
 
+function chooseItem(item: SuggestionItem): void {
+  props.command(item)
+}
+
+/**
+ * Handle keys forwarded by the TipTap editor extension.
+ */
 function onKeyDown({ event }: { event: KeyboardEvent }) {
   switch (event.key) {
     case "ArrowUp":
@@ -39,7 +53,7 @@ function onKeyDown({ event }: { event: KeyboardEvent }) {
       return true
 
     case "Enter":
-      selectItem(selectedIndex.value)
+      chooseSelectedItem()
       event.stopPropagation()
       return true
 
@@ -58,15 +72,15 @@ defineExpose({ onKeyDown })
     <template v-if="items.length">
       <button
         v-for="(item, index) in items"
-        :key="index"
+        :key="item.id ?? index"
         class="border-1 border-transparent item px-4 py-2 rounded text-left"
         :class="{ '!border-gray-800': index == selectedIndex }"
-        @click="selectItem(index)"
+        @click="chooseItem(item)"
       >
-        {{ item }}
+        {{ item.label }}
       </button>
     </template>
 
-    <div v-else class="item">No result</div>
+    <div v-else class="item">Keine Ergebnisse</div>
   </div>
 </template>
